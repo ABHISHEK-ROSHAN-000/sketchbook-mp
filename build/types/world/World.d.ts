@@ -9,6 +9,7 @@ import { InfoStack } from '../core/InfoStack';
 import { IWorldEntity } from '../interfaces/IWorldEntity';
 import { IUpdatable } from '../interfaces/IUpdatable';
 import { Character } from '../characters/Character';
+import { MultiplayerManager } from './MultiplayerManager';
 import { Path } from './Path';
 import { Vehicle } from '../vehicles/Vehicle';
 import { Scenario } from './Scenario';
@@ -34,6 +35,7 @@ export declare class World {
     params: any;
     inputManager: InputManager;
     cameraOperator: CameraOperator;
+    multiplayer: MultiplayerManager;
     timeScaleTarget: number;
     console: InfoStack;
     cannonDebugRenderer: CannonDebugRenderer;

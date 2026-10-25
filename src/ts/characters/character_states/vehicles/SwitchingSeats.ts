@@ -29,6 +29,13 @@ export class SwitchingSeats extends CharacterStateBase
 		this.canFindVehiclesToEnter = false;
 		this.canLeaveVehicles = false;
 
+		// Explicit seat hand-off bookkeeping
+		if (this.character.occupyingSeat && this.character.occupyingSeat.occupiedBy === this.character)
+		{
+			this.character.occupyingSeat.occupiedBy = null;
+		}
+		this.toSeat.occupiedBy = this.character;
+
 		character.leaveSeat();
 		this.character.occupySeat(toSeat);
 
@@ -66,6 +73,10 @@ export class SwitchingSeats extends CharacterStateBase
 			}
 			else if (this.toSeat.type === SeatType.Passenger)
 			{
+				// Passenger must not retain driving controls
+				this.character.controlledObject = undefined;
+				this.character.resetControls();
+				this.character.world.inputManager.setInputReceiver(this.character);
 				this.character.setState(new Sitting(this.character, this.toSeat));
 			}
 		}

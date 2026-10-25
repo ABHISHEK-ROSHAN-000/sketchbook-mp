@@ -29,6 +29,12 @@ export class CharacterSpawnPoint implements ISpawnPoint
 			
 			world.add(player);
 			player.takeControl();
+
+			// Hook the local player into the shared multiplayer room (if it exists)
+			if (world.multiplayer !== undefined && world.multiplayer.setLocalPlayer !== undefined)
+			{
+				world.multiplayer.setLocalPlayer(player);
+			}
 		});
 	}
 }

@@ -3,9 +3,11 @@
         "src/ts/**/*"
     ],
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es5",
+        "module": "esnext",
+        "target": "es2020",
         "moduleResolution": "node",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
         "declaration": true,
         "declarationDir": "build/types",
         "baseUrl": ".",

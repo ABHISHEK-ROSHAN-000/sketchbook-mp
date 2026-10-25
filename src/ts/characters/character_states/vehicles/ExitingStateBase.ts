@@ -40,6 +40,10 @@ export abstract class ExitingStateBase extends CharacterStateBase
 	public detachCharacterFromVehicle(): void
 	{
 		this.character.controlledObject = undefined;
+		if (this.seat && this.seat.occupiedBy === this.character)
+		{
+			this.seat.occupiedBy = null;
+		}
 		this.character.resetOrientation();
 		this.character.world.graphicsWorld.attach(this.character);
 		this.character.resetVelocity();

@@ -36,6 +36,7 @@ export class EnteringVehicle extends CharacterStateBase
 		this.canFindVehiclesToEnter = false;
 		this.vehicle = seat.vehicle;
 		this.seat = seat;
+		this.seat.occupiedBy = this.character;
 
 		const side = Utils.detectRelativeSide(entryPoint, seat.seatPointObject);
 		this.animData = this.getEntryAnimations(seat.vehicle.entityType);
@@ -65,6 +66,12 @@ export class EnteringVehicle extends CharacterStateBase
 
 		if (this.animationEnded(timeStep))
 		{
+			if (this.seat.type === SeatType.Driver && this.seat.occupiedBy !== null && this.seat.occupiedBy !== this.character)
+			{
+				// Driver seat was claimed by someone else (e.g. a remote peer) while we were entering
+				return;
+			}
+
 			this.character.occupySeat(this.seat);
 			this.character.setPosition(this.endPosition.x, this.endPosition.y, this.endPosition.z);
 

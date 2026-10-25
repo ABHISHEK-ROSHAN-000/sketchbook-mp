@@ -102,6 +102,10 @@ export class InputManager implements IUpdatable
 
 	public onMouseDown(event: MouseEvent): void
 	{
+		const nameModal = document.getElementById('mp-name-modal');
+	if (nameModal && nameModal.style.display !== 'none') return;
+	if ((event.target as HTMLElement)?.closest('#mp-hud, #mp-name-modal')) return;
+
 		if (this.pointerLock)
 		{
 			this.domElement.requestPointerLock();
@@ -142,6 +146,8 @@ export class InputManager implements IUpdatable
 
 	public onKeyDown(event: KeyboardEvent): void
 	{
+		if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+
 		if (this.inputReceiver !== undefined)
 		{
 			this.inputReceiver.handleKeyboardEvent(event, event.code, true);
@@ -150,6 +156,8 @@ export class InputManager implements IUpdatable
 
 	public onKeyUp(event: KeyboardEvent): void
 	{
+		if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+
 		if (this.inputReceiver !== undefined)
 		{
 			this.inputReceiver.handleKeyboardEvent(event, event.code, false);

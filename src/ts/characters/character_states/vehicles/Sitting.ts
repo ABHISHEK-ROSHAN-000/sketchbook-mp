@@ -49,9 +49,12 @@ export class Sitting extends CharacterStateBase
 				{
 					if (possibleDriverSeat.type === SeatType.Driver)
 					{
-						if (this.seat.door?.rotation > 0) this.seat.door.physicsEnabled = true;
-						this.character.setState(new SwitchingSeats(this.character, this.seat, possibleDriverSeat));
-						break;
+						if (possibleDriverSeat.occupiedBy === null)
+						{
+							if (this.seat.door?.rotation > 0) this.seat.door.physicsEnabled = true;
+							this.character.setState(new SwitchingSeats(this.character, this.seat, possibleDriverSeat));
+							break;
+						}
 					}
 				}
 			}
@@ -66,7 +69,11 @@ export class Sitting extends CharacterStateBase
 	{
 		if (this.character.actions.seat_switch.justPressed && this.seat.connectedSeats.length > 0)
 		{
-			this.character.setState(new SwitchingSeats(this.character, this.seat, this.seat.connectedSeats[0]));
+			const target = this.seat.connectedSeats[0];
+			if (target.occupiedBy === null)
+			{
+				this.character.setState(new SwitchingSeats(this.character, this.seat, target));
+			}
 		}
 
 		if (this.character.actions.enter.justPressed)

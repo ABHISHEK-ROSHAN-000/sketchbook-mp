@@ -82,6 +82,10 @@ export class Character extends THREE.Object3D implements IWorldEntity
 	
 	private physicsEnabled: boolean = true;
 
+	// Multiplayer
+	public isRemote: boolean = false;
+	public currentAnimationName: string = 'idle';
+
 	constructor(gltf: any)
 	{
 		super();
@@ -189,7 +193,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 
 	public setPosition(x: number, y: number, z: number): void
 	{
-		if (this.physicsEnabled)
+		if (this.physicsEnabled && !this.isRemote)
 		{
 			this.characterCapsule.body.previousPosition = new CANNON.Vec3(x, y, z);
 			this.characterCapsule.body.position = new CANNON.Vec3(x, y, z);
@@ -197,9 +201,8 @@ export class Character extends THREE.Object3D implements IWorldEntity
 		}
 		else
 		{
-			this.position.x = x;
-			this.position.y = y;
-			this.position.z = z;
+			this.position.set(x, y, z);
+			this.updateMatrixWorld();
 		}
 	}
 
@@ -405,6 +408,20 @@ export class Character extends THREE.Object3D implements IWorldEntity
 
 	public update(timeStep: number): void
 	{
+		// Remote characters are network driven: only run the animation mixer
+		// and matrix updates. Never let local physics raycasts / states run.
+		if (this.isRemote === true)
+		{
+			if (this.mixer !== undefined) this.mixer.update(timeStep);
+			if (this.occupyingSeat === null && this.parent === this.world.graphicsWorld)
+			{
+				this.springRotation(timeStep);
+				this.rotateModel();
+			}
+			this.updateMatrixWorld();
+			return;
+		}
+
 		this.behaviour?.update(timeStep);
 		this.vehicleEntryInstance?.update(timeStep);
 		// console.log(this.occupyingSeat);
@@ -489,9 +506,21 @@ export class Character extends THREE.Object3D implements IWorldEntity
 		}
 		else
 		{
-			// Look in camera's direction
-			this.viewVector = new THREE.Vector3().subVectors(this.position, this.world.camera.position);
-			this.getWorldPosition(this.world.cameraOperator.target);
+			let worldPos = new THREE.Vector3();
+			if (this.parent && this.parent !== this.world.graphicsWorld)
+			{
+				this.getWorldPosition(worldPos);
+			}
+			else
+			{
+				worldPos.copy(this.position);
+			}
+			this.world.cameraOperator.target.set(
+				worldPos.x,
+				worldPos.y + 0.6,
+				worldPos.z
+			);
+			this.viewVector = new THREE.Vector3().subVectors(worldPos, this.world.camera.position);
 		}
 		
 	}
@@ -500,6 +529,8 @@ export class Character extends THREE.Object3D implements IWorldEntity
 	{
 		if (this.mixer !== undefined)
 		{
+			this.currentAnimationName = clipName;
+
 			// gltf
 			let clip = THREE.AnimationClip.findByName( this.animations, clipName );
 
@@ -613,45 +644,58 @@ export class Character extends THREE.Object3D implements IWorldEntity
 
 			// Find best seat
 			let seatFinder = new ClosestObjectFinder<VehicleSeat>(this.position);
-			for (const seat of vehicle.seats)
+			let targetSeat: VehicleSeat | undefined;
+
+			if (wantsToDrive)
 			{
-				if (wantsToDrive)
+				// Consider unoccupied driver seats first
+				for (const seat of vehicle.seats)
 				{
-					// Consider driver seats
-					if (seat.type === SeatType.Driver)
+					if (seat.type === SeatType.Driver && seat.occupiedBy === null)
 					{
 						seat.seatPointObject.getWorldPosition(worldPos);
 						seatFinder.consider(seat, worldPos);
 					}
-					// Consider passenger seats connected to driver seats
-					else if (seat.type === SeatType.Passenger)
+				}
+				targetSeat = seatFinder.closestObject;
+
+				// Fallback: no unoccupied Driver seat -> closest unoccupied Passenger seat on this vehicle
+				if (targetSeat === undefined)
+				{
+					seatFinder = new ClosestObjectFinder<VehicleSeat>(this.position);
+					for (const seat of vehicle.seats)
 					{
-						for (const connSeat of seat.connectedSeats)
+						if (seat.type === SeatType.Passenger && seat.occupiedBy === null)
 						{
-							if (connSeat.type === SeatType.Driver)
-							{
-								seat.seatPointObject.getWorldPosition(worldPos);
-								seatFinder.consider(seat, worldPos);
-								break;
-							}
+							seat.seatPointObject.getWorldPosition(worldPos);
+							seatFinder.consider(seat, worldPos);
 						}
 					}
+					targetSeat = seatFinder.closestObject;
 				}
-				else
+			}
+			else
+			{
+				// Consider unoccupied passenger seats only
+				for (const seat of vehicle.seats)
 				{
-					// Consider passenger seats
-					if (seat.type === SeatType.Passenger)
+					if (seat.type === SeatType.Passenger && seat.occupiedBy === null)
 					{
 						seat.seatPointObject.getWorldPosition(worldPos);
 						seatFinder.consider(seat, worldPos);
 					}
 				}
+				targetSeat = seatFinder.closestObject;
+				vehicleEntryInstance.wantsToDrive = false;
 			}
 
-			if (seatFinder.closestObject !== undefined)
+			if (targetSeat !== undefined)
 			{
-				let targetSeat = seatFinder.closestObject;
 				vehicleEntryInstance.targetSeat = targetSeat;
+				if (targetSeat.type === SeatType.Passenger)
+				{
+					vehicleEntryInstance.wantsToDrive = false;
+				}
 
 				let entryPointFinder = new ClosestObjectFinder<Object3D>(this.position);
 

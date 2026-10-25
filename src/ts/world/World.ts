@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon';
 import Swal from 'sweetalert2';
-import * as $ from 'jquery';
+import $ from 'jquery';
 
 import { CameraOperator } from '../core/CameraOperator';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
@@ -23,6 +23,7 @@ import { UIManager } from '../core/UIManager';
 import { IWorldEntity } from '../interfaces/IWorldEntity';
 import { IUpdatable } from '../interfaces/IUpdatable';
 import { Character } from '../characters/Character';
+import { MultiplayerManager } from './MultiplayerManager';
 import { Path } from './Path';
 import { CollisionGroups } from '../enums/CollisionGroups';
 import { BoxCollider } from '../physics/colliders/BoxCollider';
@@ -31,6 +32,7 @@ import { Vehicle } from '../vehicles/Vehicle';
 import { Scenario } from './Scenario';
 import { Sky } from './Sky';
 import { Ocean } from './Ocean';
+import { SeededWorldGenerator } from './SeededWorldGenerator';
 
 export class World
 {
@@ -54,6 +56,7 @@ export class World
 	public params: any;
 	public inputManager: InputManager;
 	public cameraOperator: CameraOperator;
+	public multiplayer: MultiplayerManager;
 	public timeScaleTarget: number = 1;
 	public console: InfoStack;
 	public cannonDebugRenderer: CannonDebugRenderer;
@@ -150,6 +153,7 @@ export class World
 		// Initialization
 		this.inputManager = new InputManager(this, this.renderer.domElement);
 		this.cameraOperator = new CameraOperator(this, this.camera, this.params.Mouse_Sensitivity);
+		this.multiplayer = new MultiplayerManager(this);
 		this.sky = new Sky(this);
 		
 		// Load scene if path is supplied
@@ -217,6 +221,8 @@ export class World
 		this.physicsWorld.step(this.physicsFrameTime, timeStep);
 
 		this.characters.forEach((char) => {
+			if (char.isRemote === true) return;
+
 			if (this.isOutOfBounds(char.characterCapsule.body.position))
 			{
 				this.outOfBoundsRespawn(char.characterCapsule.body);
@@ -389,6 +395,9 @@ export class World
 		});
 
 		this.graphicsWorld.add(gltf.scene);
+
+		// Generate infinite seeded open-world terrain
+		new SeededWorldGenerator(this);
 
 		// Launch default scenario
 		let defaultScenarioID: string;
