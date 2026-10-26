@@ -143,6 +143,14 @@ export class VehicleDoor
 		this.targetRotation = 0;
 	}
 
+	public setRemoteRotation(value: number): void
+	{
+		this.achievingTargetRotation = false;
+		this.physicsEnabled = false;
+		this.doorVelocity = 0;
+		this.rotation = THREE.MathUtils.clamp(value, 0, 1);
+	}
+
 	public resetPhysTrailer(): void
 	{
 		// Door world position

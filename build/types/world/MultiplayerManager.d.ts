@@ -3,6 +3,7 @@ import { joinRoom } from 'trystero';
 import { World } from './World';
 import { Character } from '../characters/Character';
 import { IUpdatable } from '../interfaces/IUpdatable';
+import type { VehicleAnimationState } from '../vehicles/Vehicle';
 export type PlayerNetState = {
     x: number;
     y: number;
@@ -22,6 +23,7 @@ export type PlayerNetState = {
     vehicleNetId: string | null;
     seatIndex: number;
     attachedToSeat: boolean;
+    doorRotation: number | null;
 };
 export type ChatNetMessage = {
     sender: string;
@@ -42,6 +44,7 @@ export type VehicleNetState = {
     avx: number;
     avy: number;
     avz: number;
+    animation?: VehicleAnimationState;
 };
 type RemotePlayer = {
     char: Character;
@@ -53,6 +56,7 @@ type RemotePlayer = {
     targetQuat: THREE.Quaternion;
     currentVehicleNetId: string | null;
     currentSeatIndex: number;
+    doorRotation: number | null;
     displayName: string;
     nameSprite: THREE.Sprite;
 };
@@ -75,6 +79,7 @@ export declare class MultiplayerManager implements IUpdatable {
     private localStream?;
     private audioContext?;
     private pendingStreams;
+    private pendingSpawns;
     private voiceMuted;
     constructor(world: World);
     private setupNamePrompt;

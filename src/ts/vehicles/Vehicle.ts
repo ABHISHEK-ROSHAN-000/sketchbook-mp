@@ -13,6 +13,14 @@ import { SwitchingSeats } from '../characters/character_states/vehicles/Switchin
 import { EntityType } from '../enums/EntityType';
 import { IWorldEntity } from '../interfaces/IWorldEntity';
 
+export type VehicleAnimationState = {
+	enginePower?: number;
+	steering?: number;
+	aileron?: number;
+	elevator?: number;
+	rudder?: number;
+};
+
 export abstract class Vehicle extends THREE.Object3D implements IWorldEntity
 {
 	public updateOrder: number = 2;
@@ -31,6 +39,8 @@ export abstract class Vehicle extends THREE.Object3D implements IWorldEntity
 	public materials: THREE.Material[] = [];
 	public spawnPoint: THREE.Object3D;
 	public netId: string;
+	public isRemote: boolean = false;
+	public remoteAnimationState: VehicleAnimationState = {};
 	private modelContainer: THREE.Group;
 
 	private firstPerson: boolean = false;
@@ -83,6 +93,17 @@ export abstract class Vehicle extends THREE.Object3D implements IWorldEntity
 		return true;
 	}
 
+	public getNetworkAnimationState(): VehicleAnimationState
+	{
+		return {};
+	}
+
+	public applyNetworkAnimationState(state: VehicleAnimationState): void
+	{
+		this.isRemote = true;
+		this.remoteAnimationState = state || {};
+	}
+
 	public update(timeStep: number): void
 	{
 		this.position.set(
@@ -126,14 +147,18 @@ export abstract class Vehicle extends THREE.Object3D implements IWorldEntity
 
 	public onInputChange(): void
 	{
-		if (this.actions.seat_switch.justPressed && this.controllingCharacter?.occupyingSeat?.connectedSeats.length > 0)
+		if (this.actions.seat_switch.justPressed && this.controllingCharacter?.occupyingSeat?.connectedSeats?.length > 0)
 		{
+			// Check connected seats for an unoccupied one; if none free, stay put.
+			const freeSeat = this.controllingCharacter.occupyingSeat.connectedSeats.find((s: any) => s.occupiedBy === null || s.occupiedBy === this.controllingCharacter);
+			if (!freeSeat) return;
+
 			this.controllingCharacter.modelContainer.visible = true;
 			this.controllingCharacter.setState(
 				new SwitchingSeats(
 					this.controllingCharacter,
 					this.controllingCharacter.occupyingSeat,
-					this.controllingCharacter.occupyingSeat.connectedSeats[0]
+					freeSeat
 				)
 			);
 			this.controllingCharacter.stopControllingVehicle();
@@ -250,6 +275,7 @@ export abstract class Vehicle extends THREE.Object3D implements IWorldEntity
 
 	public inputReceiverInit(): void
 	{
+		this.isRemote = false;
 		this.collision.allowSleep = false;
 		this.setFirstPersonView(false);
 	}

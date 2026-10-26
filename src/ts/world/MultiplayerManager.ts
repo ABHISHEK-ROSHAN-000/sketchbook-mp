@@ -5,6 +5,7 @@ import { Character } from '../characters/Character';
 import { IUpdatable } from '../interfaces/IUpdatable';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { SeatType } from '../enums/SeatType';
+import type { VehicleAnimationState } from '../vehicles/Vehicle';
 
 export type PlayerNetState = {
 	x: number;
@@ -25,6 +26,7 @@ export type PlayerNetState = {
 	vehicleNetId: string | null;
 	seatIndex: number;
 	attachedToSeat: boolean;
+	doorRotation: number | null;
 };
 
 export type ChatNetMessage = {
@@ -38,6 +40,7 @@ export type VehicleNetState = {
 	qx: number; qy: number; qz: number; qw: number;
 	vx: number; vy: number; vz: number;
 	avx: number; avy: number; avz: number;
+	animation?: VehicleAnimationState;
 };
 
 type TrysteroSendOptions = {
@@ -57,6 +60,7 @@ type RemotePlayer = {
 	targetQuat: THREE.Quaternion;
 	currentVehicleNetId: string | null;
 	currentSeatIndex: number;
+	doorRotation: number | null;
 	displayName: string;
 	nameSprite: THREE.Sprite;
 };
@@ -77,6 +81,7 @@ export class MultiplayerManager implements IUpdatable
 		targetQuat: THREE.Quaternion;
 		vel: THREE.Vector3;
 		angVel: THREE.Vector3;
+		animation: VehicleAnimationState;
 		lastSeen: number;
 	}> = new Map();
 
@@ -90,6 +95,7 @@ export class MultiplayerManager implements IUpdatable
 	private localStream?: MediaStream;
 	private audioContext?: AudioContext;
 	private pendingStreams: Map<string, MediaStream> = new Map();
+	private pendingSpawns: Set<string> = new Set();
 	private voiceMuted: boolean = false;
 
 	constructor(world: World)
@@ -228,8 +234,7 @@ export class MultiplayerManager implements IUpdatable
 				if (nameModal && nameModal.style.display !== 'none') return;
 				e.preventDefault();
 				if (chatInput) {
-					chatInput.value = '/';
-					openChat();
+					openChat('/');
 				}
 			} else if (e.key === 'm' || e.key === 'M') {
 				if (document.activeElement?.tagName === 'INPUT') return;
@@ -242,7 +247,6 @@ export class MultiplayerManager implements IUpdatable
 				try {
 					const url = new URL(window.location.href);
 					if (!url.searchParams.has('room')) url.searchParams.set('room', 'sketchbook-friends');
-					if (!url.searchParams.has('seed')) url.searchParams.set('seed', 'sketchbook-world');
 					window.history.replaceState({}, '', url.toString());
 					await navigator.clipboard.writeText(url.toString());
 					const orig = inviteBtn.textContent;
@@ -279,9 +283,7 @@ export class MultiplayerManager implements IUpdatable
 		while (log.children.length > 60) log.removeChild(log.firstChild!);
 		log.scrollTop = log.scrollHeight;
 		setTimeout(() => {
-			if (!log.classList.contains('chat-open')) {
-				line.classList.add('faded');
-			}
+			line.classList.add('faded');
 		}, 6000);
 	}
 
@@ -445,6 +447,9 @@ export class MultiplayerManager implements IUpdatable
 		remote.targetQuat.set(data.qx, data.qy, data.qz, data.qw);
 		remote.currentAnim = data.anim || 'idle';
 		remote.velocity.set(data.vx, data.vy, data.vz);
+		remote.doorRotation = (typeof data.doorRotation === 'number' && Number.isFinite(data.doorRotation))
+			? data.doorRotation
+			: null;
 
 		if (data.name && data.name !== remote.displayName)
 		{
@@ -480,6 +485,7 @@ export class MultiplayerManager implements IUpdatable
 			this.localPlayer.parent &&
 			this.localPlayer.parent !== this.world.graphicsWorld
 		);
+		const doorRotation: number | null = activeSeat?.door ? activeSeat.door.rotation : null;
 
 		const netPos = new THREE.Vector3();
 		const netQuat = new THREE.Quaternion();
@@ -512,7 +518,7 @@ export class MultiplayerManager implements IUpdatable
 			this.localPlayer.getWorldQuaternion(netQuat);
 		}
 
-		return { vehicleNetId, seatIndex, attachedToSeat, netPos, netQuat };
+		return { vehicleNetId, seatIndex, attachedToSeat, netPos, netQuat, doorRotation };
 	}
 
 	private getSeatLocalTransform(vehicle: any, seat: any): { pos: THREE.Vector3; quat: THREE.Quaternion }
@@ -601,9 +607,13 @@ export class MultiplayerManager implements IUpdatable
 			const oldSeat = (oldVehicle && remote.currentSeatIndex < oldVehicle.seats.length)
 				? oldVehicle.seats[remote.currentSeatIndex]
 				: null;
-			if (oldSeat && oldSeat.occupiedBy === char)
+			if (oldSeat)
 			{
-				oldSeat.occupiedBy = null;
+				if (oldSeat.occupiedBy === char)
+				{
+					oldSeat.occupiedBy = null;
+				}
+				oldSeat.door?.close();
 			}
 		}
 	}
@@ -634,7 +644,12 @@ export class MultiplayerManager implements IUpdatable
 					remote.currentSeatIndex = seatIndex;
 				}
 
-				seat.occupiedBy = char;
+				if (!seat.occupiedBy || seat.occupiedBy === char) {
+					seat.occupiedBy = char;
+				} else {
+					// Seat taken by another player; don't steal it.
+					return;
+				}
 				const vehObj = vehicle as unknown as THREE.Object3D;
 
 				if (attachedToSeat)
@@ -743,15 +758,22 @@ export class MultiplayerManager implements IUpdatable
 			targetQuat: new THREE.Quaternion(data.qx, data.qy, data.qz, data.qw),
 			vel: new THREE.Vector3(data.vx, data.vy, data.vz),
 			angVel: new THREE.Vector3(data.avx, data.avy, data.avz),
+			animation: data.animation || {},
 			lastSeen: performance.now()
 		});
 	}
 
 	private spawnRemoteFriend(peerId: string): void
 	{
+		if (this.pendingSpawns.has(peerId)) return;
+		this.pendingSpawns.add(peerId);
+
 		const loader = new GLTFLoader();
 		loader.load('build/assets/boxman.glb', (gltf) =>
 		{
+			if (!this.pendingSpawns.has(peerId)) return;
+			this.pendingSpawns.delete(peerId);
+
 			const friend = new Character(gltf);
 			friend.isRemote = true;
 			this.world.add(friend);
@@ -770,6 +792,7 @@ export class MultiplayerManager implements IUpdatable
 				targetQuat: new THREE.Quaternion(),
 				currentVehicleNetId: null,
 				currentSeatIndex: -1,
+				doorRotation: null,
 				displayName: '',
 				nameSprite,
 			});
@@ -798,7 +821,8 @@ export class MultiplayerManager implements IUpdatable
 						inVehicle: seatInfo.attachedToSeat,
 						vehicleNetId: seatInfo.vehicleNetId,
 						seatIndex: seatInfo.seatIndex,
-						attachedToSeat: seatInfo.attachedToSeat
+						attachedToSeat: seatInfo.attachedToSeat,
+						doorRotation: seatInfo.doorRotation
 					},
 					{ target: peerId }
 				);
@@ -810,14 +834,17 @@ export class MultiplayerManager implements IUpdatable
 
 	private removeRemotePlayer(peerId: string): void
 	{
+		this.pendingSpawns.delete(peerId);
 		const remote = this.remotePlayers.get(peerId);
 		if (remote !== undefined)
 		{
 			if (remote.displayName) {
 				this.addSystemChatMessage(`${remote.displayName} left the game`);
 			}
+			this.freePreviousSeat(remote);
 			if (remote.char.occupyingSeat)
 			{
+				remote.char.occupyingSeat.door?.close();
 				if (remote.char.occupyingSeat.occupiedBy === remote.char)
 				{
 					remote.char.occupyingSeat.occupiedBy = null;
@@ -838,7 +865,7 @@ export class MultiplayerManager implements IUpdatable
 		{
 			this.syncTimer = 0;
 
-			const { vehicleNetId, seatIndex, attachedToSeat, netPos, netQuat } = this.getLocalSeatInfo();
+			const { vehicleNetId, seatIndex, attachedToSeat, netPos, netQuat, doorRotation } = this.getLocalSeatInfo();
 
 			const body = this.localPlayer.characterCapsule?.body;
 			const vel = (!attachedToSeat && body) ? new THREE.Vector3(body.velocity.x, body.velocity.y, body.velocity.z) : new THREE.Vector3();
@@ -855,7 +882,8 @@ export class MultiplayerManager implements IUpdatable
 				inVehicle: attachedToSeat,
 				vehicleNetId,
 				seatIndex,
-				attachedToSeat
+				attachedToSeat,
+				doorRotation
 			});
 
 			// Only the DRIVER broadcasts vehicle physics. Passengers ride along.
@@ -867,7 +895,8 @@ export class MultiplayerManager implements IUpdatable
 					x: b.position.x, y: b.position.y, z: b.position.z,
 					qx: b.quaternion.x, qy: b.quaternion.y, qz: b.quaternion.z, qw: b.quaternion.w,
 					vx: b.velocity.x, vy: b.velocity.y, vz: b.velocity.z,
-					avx: b.angularVelocity.x, avy: b.angularVelocity.y, avz: b.angularVelocity.z
+					avx: b.angularVelocity.x, avy: b.angularVelocity.y, avz: b.angularVelocity.z,
+					animation: drivenVehicle.getNetworkAnimationState()
 				});
 			}
 		}
@@ -881,12 +910,33 @@ export class MultiplayerManager implements IUpdatable
 		const drivenVehicle = (this.localPlayer.controlledObject as any);
 
 		this.remoteVehicles.forEach((vState, netId) => {
-			if (now - vState.lastSeen > 600) return;
-			// Skip applying our own vehicle state — we drive it locally.
-			if (drivenVehicle && drivenVehicle.netId === netId) return;
-
 			const vehicle = this.world.vehicles.find((v) => v.netId === netId);
-			if (!vehicle || !vehicle.collision) return;
+			if (!vehicle) return;
+
+			// Skip applying our own vehicle state — we drive it locally.
+			if (drivenVehicle && drivenVehicle.netId === netId)
+			{
+				vehicle.isRemote = false;
+				this.remoteVehicles.delete(netId);
+				return;
+			}
+
+			if (now - vState.lastSeen > 600)
+			{
+				// Driver stopped sending; stop visual effects instead of leaving rotors spinning.
+				vehicle.applyNetworkAnimationState({
+					enginePower: 0,
+					steering: 0,
+					aileron: 0,
+					elevator: 0,
+					rudder: 0
+				});
+				this.remoteVehicles.delete(netId);
+				return;
+			}
+
+			vehicle.applyNetworkAnimationState(vState.animation);
+			if (!vehicle.collision) return;
 
 			vState.targetPos.addScaledVector(vState.vel, dt * 0.85);
 			vehicle.position.lerp(vState.targetPos, vehAlpha);
@@ -907,6 +957,28 @@ export class MultiplayerManager implements IUpdatable
 		this.remotePlayers.forEach((remote) =>
 		{
 			const char = remote.char;
+
+			// The player using a seat owns that door's animation, including while walking to/from the vehicle.
+			if (remote.doorRotation !== null && remote.currentVehicleNetId !== null && remote.currentSeatIndex >= 0)
+			{
+				const doorVehicle = this.world.vehicles.find((v) => v.netId === remote.currentVehicleNetId);
+				const doorSeat = (doorVehicle && remote.currentSeatIndex < doorVehicle.seats.length)
+					? doorVehicle.seats[remote.currentSeatIndex]
+					: null;
+
+				if (doorSeat?.door)
+				{
+					const targetDoorRotation = THREE.MathUtils.clamp(remote.doorRotation, 0, 1);
+					const doorAlpha = 1 - Math.exp(-25 * dt);
+					const nextDoorRotation = THREE.MathUtils.lerp(doorSeat.door.rotation, targetDoorRotation, doorAlpha);
+
+					doorSeat.door.setRemoteRotation(
+						Math.abs(nextDoorRotation - targetDoorRotation) < 0.005
+							? targetDoorRotation
+							: nextDoorRotation
+					);
+				}
+			}
 
 			// Seated remote: stay locked to the vehicle hierarchy so the avatar NEVER skids/lags
 			// behind the car and ALWAYS faces the front of the vehicle.

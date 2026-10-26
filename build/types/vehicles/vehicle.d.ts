@@ -7,6 +7,13 @@ import { VehicleSeat } from './VehicleSeat';
 import { Wheel } from './Wheel';
 import { EntityType } from '../enums/EntityType';
 import { IWorldEntity } from '../interfaces/IWorldEntity';
+export type VehicleAnimationState = {
+    enginePower?: number;
+    steering?: number;
+    aileron?: number;
+    elevator?: number;
+    rudder?: number;
+};
 export declare abstract class Vehicle extends THREE.Object3D implements IWorldEntity {
     updateOrder: number;
     abstract entityType: EntityType;
@@ -25,10 +32,14 @@ export declare abstract class Vehicle extends THREE.Object3D implements IWorldEn
     materials: THREE.Material[];
     spawnPoint: THREE.Object3D;
     netId: string;
+    isRemote: boolean;
+    remoteAnimationState: VehicleAnimationState;
     private modelContainer;
     private firstPerson;
     constructor(gltf: any, handlingSetup?: any);
     noDirectionPressed(): boolean;
+    getNetworkAnimationState(): VehicleAnimationState;
+    applyNetworkAnimationState(state: VehicleAnimationState): void;
     update(timeStep: number): void;
     forceCharacterOut(): void;
     onInputChange(): void;

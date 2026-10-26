@@ -22,5 +22,6 @@ export declare class VehicleDoor {
     preStepCallback(): void;
     open(): void;
     close(): void;
+    setRemoteRotation(value: number): void;
     resetPhysTrailer(): void;
 }

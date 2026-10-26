@@ -75,6 +75,7 @@
   }
   .mc-chat-line.faded {
     opacity: 0;
+    display: none;
   }
   #mp-chat-log.chat-open .mc-chat-line {
     opacity: 1 !important;
@@ -100,11 +101,11 @@
 </style>
 
 <div id="mp-hud">
-  <div id="mp-top-bar">
+  <div id="mp-top-bar" style="position:fixed; top:16px; right:16px; z-index:101; pointer-events:auto;">
     <button id="mp-voice-btn" class="mp-btn">Mic: OFF (M)</button>
     <button id="mp-invite-btn" class="mp-btn">Copy Invite Link</button>
   </div>
-  <div id="mp-chat-log"></div>
+  <div id="mp-chat-log" style="max-height:150px; overflow:hidden;"></div>
   <div id="mp-chat-input-row">
     <input id="mp-chat-input" type="text" maxlength="140" autocomplete="off" placeholder="Write message and press Enter..." />
   </div>

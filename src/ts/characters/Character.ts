@@ -648,7 +648,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 
 			if (wantsToDrive)
 			{
-				// Consider unoccupied driver seats first
+				// Consider unoccupied driver seats
 				for (const seat of vehicle.seats)
 				{
 					if (seat.type === SeatType.Driver && seat.occupiedBy === null)
@@ -657,9 +657,29 @@ export class Character extends THREE.Object3D implements IWorldEntity
 						seatFinder.consider(seat, worldPos);
 					}
 				}
+
+				// Also consider unoccupied passenger seats that can reach a free driver seat.
+				// This restores the original behavior where the character enters from the
+				// closest side and then switches to the driver seat once seated.
+				for (const seat of vehicle.seats)
+				{
+					if (seat.type === SeatType.Passenger && seat.occupiedBy === null)
+					{
+						for (const connectedSeat of seat.connectedSeats)
+						{
+							if (connectedSeat.type === SeatType.Driver && connectedSeat.occupiedBy === null)
+							{
+								seat.seatPointObject.getWorldPosition(worldPos);
+								seatFinder.consider(seat, worldPos);
+								break;
+							}
+						}
+					}
+				}
+
 				targetSeat = seatFinder.closestObject;
 
-				// Fallback: no unoccupied Driver seat -> closest unoccupied Passenger seat on this vehicle
+				// Multiplayer fallback: if every driver seat is occupied, enter as a passenger.
 				if (targetSeat === undefined)
 				{
 					seatFinder = new ClosestObjectFinder<VehicleSeat>(this.position);
@@ -672,6 +692,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 						}
 					}
 					targetSeat = seatFinder.closestObject;
+					vehicleEntryInstance.wantsToDrive = false;
 				}
 			}
 			else
@@ -692,10 +713,6 @@ export class Character extends THREE.Object3D implements IWorldEntity
 			if (targetSeat !== undefined)
 			{
 				vehicleEntryInstance.targetSeat = targetSeat;
-				if (targetSeat.type === SeatType.Passenger)
-				{
-					vehicleEntryInstance.wantsToDrive = false;
-				}
 
 				let entryPointFinder = new ClosestObjectFinder<Object3D>(this.position);
 

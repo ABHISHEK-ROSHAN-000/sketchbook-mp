@@ -28,7 +28,7 @@ module.exports={
   "name": "cannon",
   "version": "0.6.2",
   "description": "A lightweight 3D physics engine written in JavaScript.",
-  "homepage": "https://github.com/schteppe/cannon.js",
+  "homepage": "",
   "author": "Stefan Hedman <schteppe@gmail.com> (http://steffe.se)",
   "keywords": [
     "cannon.js",
@@ -43,10 +43,10 @@ module.exports={
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/schteppe/cannon.js.git"
+    "url": ""
   },
   "bugs": {
-    "url": "https://github.com/schteppe/cannon.js/issues"
+    "url": ""
   },
   "licenses": [
     {
@@ -535,8 +535,7 @@ module.exports = Broadphase;
  * Base class for broadphase implementations
  * @class Broadphase
  * @constructor
- * @author schteppe
- */
+  */
 function Broadphase(){
     /**
     * The world to search for collisions in.
@@ -2494,8 +2493,7 @@ var Vec3 = _dereq_('../math/Vec3');
 /**
  * @class ConeTwistConstraint
  * @constructor
- * @author schteppe
- * @param {Body} bodyA
+  * @param {Body} bodyA
  * @param {Body} bodyB
  * @param {object} [options]
  * @param {Vec3} [options.pivotA]
@@ -2580,8 +2578,7 @@ var Utils = _dereq_('../utils/Utils');
 /**
  * Constraint base class
  * @class Constraint
- * @author schteppe
- * @constructor
+  * @constructor
  * @param {Body} bodyA
  * @param {Body} bodyB
  * @param {object} [options]
@@ -2675,8 +2672,7 @@ var ContactEquation = _dereq_('../equations/ContactEquation');
  * Constrains two bodies to be at a constant distance from each others center of mass.
  * @class DistanceConstraint
  * @constructor
- * @author schteppe
- * @param {Body} bodyA
+  * @param {Body} bodyA
  * @param {Body} bodyB
  * @param {Number} [distance] The distance to keep. If undefined, it will be set to the current distance between bodyA and bodyB
  * @param {Number} [maxForce=1e6]
@@ -2736,8 +2732,7 @@ var Vec3 = _dereq_('../math/Vec3');
  * Hinge constraint. Think of it as a door hinge. It tries to keep the door in the correct place and with the correct orientation.
  * @class HingeConstraint
  * @constructor
- * @author schteppe
- * @param {Body} bodyA
+  * @param {Body} bodyA
  * @param {Body} bodyB
  * @param {object} [options]
  * @param {Vec3} [options.pivotA] A point defined locally in bodyA. This defines the offset of axisA.
@@ -2872,8 +2867,7 @@ var Vec3 = _dereq_('../math/Vec3');
  * Lock constraint. Will remove all degrees of freedom between the bodies.
  * @class LockConstraint
  * @constructor
- * @author schteppe
- * @param {Body} bodyA
+  * @param {Body} bodyA
  * @param {Body} bodyB
  * @param {object} [options]
  * @param {Number} [options.maxForce=1e6]
@@ -3056,8 +3050,7 @@ var Equation = _dereq_('./Equation');
  * Cone equation. Works to keep the given body world vectors aligned, or tilted within a given angle from each other.
  * @class ConeEquation
  * @constructor
- * @author schteppe
- * @param {Body} bodyA
+  * @param {Body} bodyA
  * @param {Body} bodyB
  * @param {Vec3} [options.axisA] Local axis in A
  * @param {Vec3} [options.axisB] Local axis in B
@@ -3135,8 +3128,7 @@ var Mat3 = _dereq_('../math/Mat3');
  * Contact/non-penetration constraint equation
  * @class ContactEquation
  * @constructor
- * @author schteppe
- * @param {Body} bodyA
+  * @param {Body} bodyA
  * @param {Body} bodyB
  * @extends Equation
  */
@@ -3271,8 +3263,7 @@ var JacobianElement = _dereq_('../math/JacobianElement'),
  * Equation base class
  * @class Equation
  * @constructor
- * @author schteppe
- * @param {Body} bi
+  * @param {Body} bi
  * @param {Body} bj
  * @param {Number} minForce Minimum (read: negative max) force to be applied by the constraint.
  * @param {Number} maxForce Maximum (read: positive max) force to be applied by the constraint.
@@ -3536,8 +3527,7 @@ var Mat3 = _dereq_('../math/Mat3');
  * Constrains the slipping in a contact along a tangent
  * @class FrictionEquation
  * @constructor
- * @author schteppe
- * @param {Body} bodyA
+  * @param {Body} bodyA
  * @param {Body} bodyB
  * @param {Number} slipForce should be +-F_friction = +-mu * F_normal = +-mu * m * g
  * @extends Equation
@@ -3597,8 +3587,7 @@ var Equation = _dereq_('./Equation');
  * Rotational constraint. Works to keep the local vectors orthogonal to each other in world space.
  * @class RotationalEquation
  * @constructor
- * @author schteppe
- * @param {Body} bodyA
+  * @param {Body} bodyA
  * @param {Body} bodyB
  * @param {Vec3} [options.axisA]
  * @param {Vec3} [options.axisB]
@@ -3668,8 +3657,7 @@ var Equation = _dereq_('./Equation');
  * Rotational motor constraint. Tries to keep the relative angular velocity of the bodies to a given value.
  * @class RotationalMotorEquation
  * @constructor
- * @author schteppe
- * @param {Body} bodyA
+  * @param {Body} bodyA
  * @param {Body} bodyB
  * @param {Number} maxForce
  * @extends Equation
@@ -3818,8 +3806,7 @@ module.exports = Material;
  * @class Material
  * @constructor
  * @param {object} [options]
- * @author schteppe
- */
+  */
 function Material(options){
     var name = '';
     options = options || {};
@@ -3914,8 +3901,7 @@ var Vec3 = _dereq_('./Vec3');
  * @class Mat3
  * @constructor
  * @param array elements Array of nine elements. Optional.
- * @author schteppe / http://github.com/schteppe
- */
+  */
 function Mat3(elements){
     /**
      * A vector of length 9, containing all matrix elements
@@ -4552,8 +4538,7 @@ Quaternion.prototype.normalize = function(){
  * Approximation of quaternion normalization. Works best when quat is already almost-normalized.
  * @method normalizeFast
  * @see http://jsperf.com/fast-quaternion-normalization
- * @author unphased, https://github.com/unphased
- */
+  */
 Quaternion.prototype.normalizeFast = function () {
     var f = (3.0-(this.x*this.x+this.y*this.y+this.z*this.z+this.w*this.w))/2.0;
     if ( f === 0 ) {
@@ -4935,8 +4920,7 @@ var Mat3 = _dereq_('./Mat3');
  * @param {Number} x
  * @param {Number} y
  * @param {Number} z
- * @author schteppe
- * @example
+  * @example
  *     var v = new Vec3(1, 2, 3);
  *     console.log('x=' + v.x); // x=1
  */
@@ -7998,8 +7982,7 @@ var ConvexPolyhedron = _dereq_('./ConvexPolyhedron');
  * @class Box
  * @constructor
  * @param {Vec3} halfExtents
- * @author schteppe
- * @extends Shape
+  * @extends Shape
  */
 function Box(halfExtents){
     Shape.call(this, {
@@ -8242,9 +8225,7 @@ var Transform = _dereq_('../math/Transform');
  * @param {array} points An array of Vec3's
  * @param {array} faces Array of integer arrays, describing which vertices that is included in each face.
  *
- * @author qiao / https://github.com/qiao (original author, see https://github.com/qiao/three.js/commit/85026f0c769e4000148a67d45a9e9b9c5108836f)
- * @author schteppe / https://github.com/schteppe
- * @see http://www.altdevblogaday.com/2011/05/13/contact-generation-between-3d-convex-meshes/
+   * @see http://www.altdevblogaday.com/2011/05/13/contact-generation-between-3d-convex-meshes/
  * @see http://bullet.googlecode.com/svn/trunk/src/BulletCollision/NarrowPhaseCollision/btPolyhedralContactClipping.cpp
  *
  * @todo Move the clipping functions to ContactGenerator?
@@ -9169,8 +9150,7 @@ var ConvexPolyhedron = _dereq_('./ConvexPolyhedron');
  * @class Cylinder
  * @constructor
  * @extends ConvexPolyhedron
- * @author schteppe / https://github.com/schteppe
- * @param {Number} radiusTop
+  * @param {Number} radiusTop
  * @param {Number} radiusBottom
  * @param {Number} height
  * @param {Number} numSegments The number of segments to build the cylinder out of
@@ -9934,8 +9914,7 @@ var Vec3 = _dereq_('../math/Vec3');
  * Particle shape.
  * @class Particle
  * @constructor
- * @author schteppe
- * @extends Shape
+  * @extends Shape
  */
 function Particle(){
     Shape.call(this, {
@@ -9982,8 +9961,7 @@ var Vec3 = _dereq_('../math/Vec3');
  * @class Plane
  * @constructor
  * @extends Shape
- * @author schteppe
- */
+  */
 function Plane(){
     Shape.call(this, {
         type: Shape.types.PLANE
@@ -10052,8 +10030,7 @@ var Material = _dereq_('../material/Material');
  * @param {number} [options.collisionFilterMask=-1]
  * @param {number} [options.collisionResponse=true]
  * @param {number} [options.material=null]
- * @author schteppe
- */
+  */
 function Shape(options){
     options = options || {};
 
@@ -10166,8 +10143,7 @@ var Vec3 = _dereq_('../math/Vec3');
  * @constructor
  * @extends Shape
  * @param {Number} radius The radius of the sphere, a non-negative number.
- * @author schteppe / http://github.com/schteppe
- */
+  */
 function Sphere(radius){
     Shape.call(this, {
         type: Shape.types.SPHERE
@@ -10789,8 +10765,7 @@ var Solver = _dereq_('./Solver');
  * @class GSSolver
  * @constructor
  * @todo The spook parameters should be specified for each constraint, not globally.
- * @author schteppe / https://github.com/schteppe
- * @see https://www8.cs.umu.se/kurser/5DV058/VT09/lectures/spooknotes.pdf
+  * @see https://www8.cs.umu.se/kurser/5DV058/VT09/lectures/spooknotes.pdf
  * @extends Solver
  */
 function GSSolver(){
@@ -10926,8 +10901,7 @@ module.exports = Solver;
  * Constraint equation solver base class.
  * @class Solver
  * @constructor
- * @author schteppe / https://github.com/schteppe
- */
+  */
 function Solver(){
     /**
      * All equations to be solved

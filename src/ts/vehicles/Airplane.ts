@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon';
 
-import { Vehicle } from './Vehicle';
+import { Vehicle, VehicleAnimationState } from './Vehicle';
 import { IControllable } from '../interfaces/IControllable';
 import { IWorldEntity } from '../interfaces/IWorldEntity';
 import { KeyBinding } from '../core/KeyBinding';
@@ -77,9 +77,49 @@ export class Airplane extends Vehicle implements IControllable, IWorldEntity
 		return result;
 	}
 
+	public getNetworkAnimationState(): VehicleAnimationState
+	{
+		return {
+			enginePower: this.enginePower,
+			steering: this.steeringSimulator.position,
+			aileron: this.aileronSimulator.position,
+			elevator: this.elevatorSimulator.position,
+			rudder: this.rudderSimulator.position
+		};
+	}
+
 	public update(timeStep: number): void
 	{
+		if (this.isRemote)
+		{
+			this.setSteeringValue(this.remoteAnimationState.steering ?? 0);
+		}
+
 		super.update(timeStep);
+
+		if (this.isRemote)
+		{
+			this.enginePower = THREE.MathUtils.clamp(this.remoteAnimationState.enginePower ?? 0, 0, 1);
+
+			if (this.rotor)
+			{
+				this.rotor.rotateX(this.enginePower * timeStep * 60);
+			}
+
+			const aileron = this.remoteAnimationState.aileron ?? 0;
+			const elevator = this.remoteAnimationState.elevator ?? 0;
+			const rudder = this.remoteAnimationState.rudder ?? 0;
+
+			if (this.leftAileron) this.leftAileron.rotation.y = aileron;
+			if (this.rightAileron) this.rightAileron.rotation.y = -aileron;
+			this.elevators.forEach((elevatorObject) =>
+			{
+				elevatorObject.rotation.y = elevator;
+			});
+			if (this.rudder) this.rudder.rotation.y = rudder;
+
+			return;
+		}
 		
 		// Rotors visuals
 		if (this.controllingCharacter !== undefined)

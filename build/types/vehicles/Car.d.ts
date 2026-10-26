@@ -1,5 +1,5 @@
 import * as CANNON from 'cannon';
-import { Vehicle } from './Vehicle';
+import { Vehicle, VehicleAnimationState } from './Vehicle';
 import { IControllable } from '../interfaces/IControllable';
 import { EntityType } from '../enums/EntityType';
 export declare class Car extends Vehicle implements IControllable {
@@ -17,6 +17,7 @@ export declare class Car extends Vehicle implements IControllable {
     private characterWantsToExit;
     constructor(gltf: any);
     noDirectionPressed(): boolean;
+    getNetworkAnimationState(): VehicleAnimationState;
     update(timeStep: number): void;
     shiftUp(): void;
     shiftDown(): void;

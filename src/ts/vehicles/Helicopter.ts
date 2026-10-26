@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon';
 import * as Utils from '../core/FunctionLibrary';
 
-import { Vehicle } from './Vehicle';
+import { Vehicle, VehicleAnimationState } from './Vehicle';
 import { IControllable } from '../interfaces/IControllable';
 import { IWorldEntity } from '../interfaces/IWorldEntity';
 import { KeyBinding } from '../core/KeyBinding';
@@ -47,9 +47,26 @@ export class Helicopter extends Vehicle implements IControllable, IWorldEntity
 		return result;
 	}
 
+	public getNetworkAnimationState(): VehicleAnimationState
+	{
+		return { enginePower: this.enginePower };
+	}
+
 	public update(timeStep: number): void
 	{
 		super.update(timeStep);
+
+		if (this.isRemote)
+		{
+			this.enginePower = THREE.MathUtils.clamp(this.remoteAnimationState.enginePower ?? 0, 0, 1);
+
+			this.rotors.forEach((rotor) =>
+			{
+				rotor.rotateX(this.enginePower * timeStep * 30);
+			});
+
+			return;
+		}
 		
 		// Rotors visuals
 		if (this.controllingCharacter !== undefined)

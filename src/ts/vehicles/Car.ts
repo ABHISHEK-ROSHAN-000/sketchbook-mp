@@ -1,6 +1,6 @@
 import * as CANNON from 'cannon';
 
-import { Vehicle } from './Vehicle';
+import { Vehicle, VehicleAnimationState } from './Vehicle';
 import { IControllable } from '../interfaces/IControllable';
 import { KeyBinding } from '../core/KeyBinding';
 import * as THREE from 'three';
@@ -74,9 +74,29 @@ export class Car extends Vehicle implements IControllable
 		return result;
 	}
 
+	public getNetworkAnimationState(): VehicleAnimationState
+	{
+		return { steering: this.steeringSimulator.position };
+	}
+
 	public update(timeStep: number): void
 	{
+		if (this.isRemote)
+		{
+			this.setSteeringValue(this.remoteAnimationState.steering ?? 0);
+		}
+
 		super.update(timeStep);
+
+		if (this.isRemote)
+		{
+			if (this.steeringWheel !== undefined)
+			{
+				this.steeringWheel.rotation.z = -(this.remoteAnimationState.steering ?? 0) * 2;
+			}
+
+			return;
+		}
 
 		const tiresHaveContact = this.rayCastVehicle.numWheelsOnGround > 0;
 

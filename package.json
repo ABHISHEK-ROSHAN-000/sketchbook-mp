@@ -19,18 +19,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/swift502/Sketchbook.git"
+    "url": ""
   },
   "author": "swift502 <blaha.j502@gmail.com> (http://jblaha.art/)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/swift502/Sketchbook/issues"
+    "url": ""
   },
-  "homepage": "https://github.com/swift502/Sketchbook",
+  "homepage": "",
   "devDependencies": {
     "@types/jquery": "^3.5.5",
     "@types/lodash": "^4.14.168",
-    "@types/seedrandom": "^3.0.8",
     "css-loader": "^6.8.1",
     "style-loader": "^3.3.3",
     "ts-loader": "^9.5.1",
@@ -44,8 +43,6 @@
     "jquery": "^3.6.0",
     "lodash": "^4.17.21",
     "nipplejs": "^1.0.4",
-    "seedrandom": "^3.0.5",
-    "simplex-noise": "^4.0.3",
     "sweetalert2": "^9.17.2",
     "three": "0.113.0",
     "three-csm": "1.0.2",
