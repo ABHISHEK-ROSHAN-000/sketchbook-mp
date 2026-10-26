@@ -1,22 +1,8 @@
-<p align="center">
-	<a href="https://jblaha.art/sketchbook/latest"><img src="./src/img/thumbnail.png"></a>
-	<br>
-	<a href="https://jblaha.art/sketchbook/latest">Live demo</a>
-	<br>
-</p>
-
-# Final update (20. Feb 2023)
-
-As I have no more interest in developing this project, it comes to a conclusion. In order to remain honest about the true state of the project, I am archiving this repository.
-
-- If you wish to modify Sketchbook feel free to fork it.
-
-
 # 📒 Sketchbook
 
-Simple web based game engine built on three.js and cannon.js focused on third-person character controls and related gameplay mechanics.
+Sketchbook is a web-based 3D playground built on three.js and cannon.js, focused on third-person character controls and related gameplay mechanics. It's a place to explore how conventional third-person mechanics found in modern games work — and to recreate them in a general, reusable way.
 
-Mostly a playground for exploring how conventional third person gameplay mechanics found in modern games work and recreating them in a general way.
+Drive cars, fly airplanes, pilot helicopters, and move around with a raycast character controller featuring capsule collisions and a dynamic camera.
 
 ## Features
 
@@ -83,9 +69,7 @@ const world = new World('scene.glb');
 ## Contributing
 
 1. Get the LTS version of [Node.js](https://nodejs.org/en/) 16
-3. Run `npm install`
-4. Run `npm run dev`
-5. Make changes and test them out at http://localhost:8080
-
-## Credits
+2. Run `npm install`
+3. Run `npm run dev`
+4. Make changes and test them out at http://localhost:8080
 
