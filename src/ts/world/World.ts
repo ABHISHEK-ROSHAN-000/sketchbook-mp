@@ -503,6 +503,10 @@ export class World
 					</div> 
 				</div> 
 				<div id="loading-text">Loading...</div>
+				<div id="loading-progress-bar-container" style="width: 260px; height: 16px; background: rgba(255,255,255,0.15); border-radius: 8px; margin-top: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.25);">
+					<div id="loading-progress-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #52a535, #8ed16d); border-radius: 8px; transition: width 0.15s ease;"></div>
+				</div>
+				<div id="loading-percent" style="font-size: 13px; margin-top: 6px; color: rgba(255,255,255,0.8); font-family: monospace;">0%</div>
 			</div>
 		`).appendTo('body');
 

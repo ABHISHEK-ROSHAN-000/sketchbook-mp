@@ -13,6 +13,7 @@ export class LoadingManager
 	private world: World;
 	private gltfLoader: GLTFLoader;
 	private loadingTracker: LoadingTrackerEntry[] = [];
+	private progressUpdateInterval?: number;
 
 	constructor(world: World)
 	{
@@ -22,6 +23,8 @@ export class LoadingManager
 		this.world.setTimeScale(0);
 		UIManager.setUserInterfaceVisible(false);
 		UIManager.setLoadingScreenVisible(true);
+		this.startProgressUpdate();
+		this.updateProgressDisplay();
 	}
 
 	public loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void
@@ -39,6 +42,7 @@ export class LoadingManager
 			if ( xhr.lengthComputable )
 			{
 				trackerEntry.progress = xhr.loaded / xhr.total;
+				this.updateProgressDisplay();
 			}
 		},
 		(error)  =>
@@ -71,8 +75,39 @@ export class LoadingManager
 				UIManager.setUserInterfaceVisible(true);
 			}
 
+			this.updateProgressDisplay();
 			UIManager.setLoadingScreenVisible(false);
+			this.stopProgressUpdate();
 		}
+	}
+
+	private startProgressUpdate(): void
+	{
+		if (this.progressUpdateInterval === undefined)
+		{
+			this.progressUpdateInterval = window.setInterval(() =>
+			{
+				this.updateProgressDisplay();
+			}, 100);
+		}
+	}
+
+	private stopProgressUpdate(): void
+	{
+		if (this.progressUpdateInterval !== undefined)
+		{
+			clearInterval(this.progressUpdateInterval);
+			this.progressUpdateInterval = undefined;
+		}
+	}
+
+	private updateProgressDisplay(): void
+	{
+		const percentage = Math.round(this.getLoadingPercentage());
+		const fill = document.getElementById('loading-progress-fill');
+		const percentText = document.getElementById('loading-percent');
+		if (fill) fill.style.width = percentage + '%';
+		if (percentText) percentText.textContent = percentage + '%';
 	}
 
 	public createWelcomeScreenCallback(scenario: Scenario): void
@@ -109,6 +144,8 @@ export class LoadingManager
 			finished += item.progress;
 			if (!item.finished) done = false;
 		}
+
+		if (total === 0) return 0;
 
 		return (finished / total) * 100;
 	}
